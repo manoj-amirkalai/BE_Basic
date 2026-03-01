@@ -1,0 +1,642 @@
+Here is a complete MongoDB / Mongoose Filter Operators Guide with examples. These are used inside find(), findOne(), update(), etc.
+
+1. Comparison Operators
+$gt → greater than
+Item.find({
+  price: { $gt: 100 }
+});
+
+
+SQL equivalent:
+
+WHERE price > 100
+
+$gte → greater than or equal
+Item.find({
+  price: { $gte: 100 }
+});
+
+
+SQL:
+
+WHERE price >= 100
+
+$lt → less than
+Item.find({
+  price: { $lt: 500 }
+});
+
+$lte → less than or equal
+Item.find({
+  price: { $lte: 500 }
+});
+
+$eq → equal
+Item.find({
+  price: { $eq: 100 }
+});
+
+
+Same as:
+
+Item.find({ price: 100 });
+
+$ne → not equal
+Item.find({
+  status: { $ne: "inactive" }
+});
+
+
+SQL:
+
+WHERE status != 'inactive'
+
+2. Range Query (Min and Max)
+Item.find({
+  price: {
+    $gte: 100,
+    $lte: 500
+  }
+});
+
+3. $in → match any value in array
+Item.find({
+  status: { $in: ["active", "pending"] }
+});
+
+
+SQL:
+
+WHERE status IN ('active', 'pending')
+
+4. $nin → not in array
+Item.find({
+  status: { $nin: ["inactive", "deleted"] }
+});
+
+5. Logical Operators
+$and
+Item.find({
+  $and: [
+    { status: "active" },
+    { price: { $gt: 100 } }
+  ]
+});
+
+
+Same as:
+
+Item.find({
+  status: "active",
+  price: { $gt: 100 }
+});
+
+$or
+Item.find({
+  $or: [
+    { status: "active" },
+    { price: { $lt: 50 } }
+  ]
+});
+
+
+SQL:
+
+WHERE status='active' OR price<50
+
+$nor
+Item.find({
+  $nor: [
+    { status: "inactive" },
+    { price: { $lt: 100 } }
+  ]
+});
+
+6. Element Operators
+$exists
+
+Check if field exists
+
+Item.find({
+  quantity: { $exists: true }
+});
+
+$type
+Item.find({
+  price: { $type: "number" }
+});
+
+7. Evaluation Operators
+$regex → search (LIKE in SQL)
+Item.find({
+  name: { $regex: "pen", $options: "i" }
+});
+
+
+Matches:
+
+Pen
+pen
+Pencil
+
+
+SQL:
+
+WHERE name LIKE '%pen%'
+
+8. Array Operators
+$all
+Item.find({
+  tags: { $all: ["electronics", "mobile"] }
+});
+
+$size
+Item.find({
+  tags: { $size: 2 }
+});
+
+9. Not Operator
+$not
+Item.find({
+  price: { $not: { $gt: 100 } }
+});
+
+10. Combining Multiple Filters
+Item.find({
+  status: "active",
+  price: {
+    $gte: 100,
+    $lte: 1000
+  },
+  category: {
+    $in: ["electronics", "books"]
+  },
+  name: {
+    $regex: "phone",
+    $options: "i"
+  }
+});
+
+11. Real API Example
+
+URL:
+
+GET /api/items?minPrice=100&maxPrice=500&status=active&search=pen
+
+
+Controller:
+
+const filter = {};
+
+if (req.query.status)
+  filter.status = req.query.status;
+
+if (req.query.minPrice || req.query.maxPrice) {
+  filter.price = {};
+
+  if (req.query.minPrice)
+    filter.price.$gte = Number(req.query.minPrice);
+
+  if (req.query.maxPrice)
+    filter.price.$lte = Number(req.query.maxPrice);
+}
+
+if (req.query.search) {
+  filter.name = {
+    $regex: req.query.search,
+    $options: "i"
+  };
+}
+
+const items = await Item.find(filter);
+
+12. All Operators Summary Table
+Operator	Meaning
+$gt	greater than
+$gte	greater than equal
+$lt	less than
+$lte	less than equal
+$eq	equal
+$ne	not equal
+$in	match in array
+$nin	not in array
+$and	AND condition
+$or	OR condition
+$regex	search
+$exists	field exists
+$not	NOT condition
+$all	array contains all values
+$size	array length
+13. Advanced Example (Production level)
+Item.find({
+  status: { $in: ["active", "pending"] },
+  price: { $gte: 100, $lte: 1000 },
+  name: { $regex: "phone", $options: "i" }
+})
+.sort("-price")
+.limit(10)
+.skip(0)
+.select("name price status")
+.lean();
+
+
+If you want, I can now show a complete production-level GET API with
+
+• search
+• filter
+• pagination
+• sorting
+• field selection
+• count
+• best performance structure.
+
+give full document tation for above
+
+Here is a complete documentation-style guide for MongoDB / Mongoose querying with filter, sort, pagination, operators, and options. This is written like real production documentation.
+
+📘 Mongoose Query Documentation (Full Guide)
+1. Model Used in Examples
+const mongoose = require("mongoose");
+
+const itemSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  price: {
+    type: Number,
+    required: true
+  },
+  quantity: {
+    type: Number,
+    default: 0
+  },
+  status: {
+    type: String,
+    enum: ["active", "inactive", "pending"],
+    default: "active"
+  },
+  category: {
+    type: String
+  }
+}, {
+  timestamps: true
+});
+
+const Item = mongoose.model("Item", itemSchema);
+
+2. Basic Query Function
+Syntax
+Model.find(filter, projection, options)
+
+Parameters
+Parameter	Type	Description
+filter	Object	Query conditions
+projection	Object / String	Fields to include/exclude
+options	Object	Query options
+3. Filter Documentation
+
+Filter defines which documents to retrieve.
+
+Example
+Item.find({
+  status: "active"
+});
+
+
+Result:
+
+Returns all items where status = active
+
+4. Comparison Operators
+$gt – Greater Than
+Item.find({
+  price: { $gt: 100 }
+});
+
+$gte – Greater Than Equal
+Item.find({
+  price: { $gte: 100 }
+});
+
+$lt – Less Than
+Item.find({
+  price: { $lt: 500 }
+});
+
+$lte – Less Than Equal
+Item.find({
+  price: { $lte: 500 }
+});
+
+Range Query Example
+Item.find({
+  price: {
+    $gte: 100,
+    $lte: 1000
+  }
+});
+
+5. Logical Operators
+$or
+Item.find({
+  $or: [
+    { status: "active" },
+    { price: { $lt: 100 } }
+  ]
+});
+
+$and
+Item.find({
+  $and: [
+    { status: "active" },
+    { category: "electronics" }
+  ]
+});
+
+6. Array Operators
+$in
+Item.find({
+  status: { $in: ["active", "pending"] }
+});
+
+$nin
+Item.find({
+  status: { $nin: ["inactive"] }
+});
+
+7. Search Operator
+$regex
+Item.find({
+  name: {
+    $regex: "pen",
+    $options: "i"
+  }
+});
+
+
+Matches:
+
+Pen
+pen
+Pencil
+
+8. Projection (Field Selection)
+
+Controls which fields to return.
+
+Include fields
+Item.find({}, "name price");
+
+
+Result:
+
+{
+  "name": "Pen",
+  "price": 10
+}
+
+Exclude fields
+Item.find({}, "-quantity");
+
+Using select()
+Item.find().select("name price");
+
+9. Sorting Documentation
+
+Sort defines order of results.
+
+Syntax
+Model.find().sort(sortObject)
+
+Ascending
+Item.find().sort({ price: 1 });
+
+Descending
+Item.find().sort({ price: -1 });
+
+Multiple Sort
+Item.find().sort({
+  price: 1,
+  quantity: -1
+});
+
+String Format
+Item.find().sort("price -quantity");
+
+10. Limit Documentation
+
+Limits number of results.
+
+Syntax
+Model.find().limit(number)
+
+Example
+Item.find().limit(5);
+
+11. Skip Documentation
+
+Used for pagination.
+
+Syntax
+Model.find().skip(number)
+
+Example
+Item.find().skip(10);
+
+
+Skips first 10 records.
+
+12. Pagination Documentation
+Formula
+skip = (page - 1) * limit
+
+Example
+const page = 2;
+const limit = 5;
+
+Item.find()
+.skip((page - 1) * limit)
+.limit(limit);
+
+13. Count Documentation
+
+Returns total count.
+
+Syntax
+Model.countDocuments(filter)
+
+Example
+Item.countDocuments({
+  status: "active"
+});
+
+14. Options Documentation
+lean()
+
+Returns plain JS object instead of mongoose document.
+
+Item.find().lean();
+
+
+Benefits:
+• Faster
+• Less memory
+
+exec()
+
+Executes query explicitly.
+
+Item.find().exec();
+
+new option (update)
+Item.findByIdAndUpdate(id, update, {
+  new: true
+});
+
+
+Returns updated document.
+
+runValidators
+Item.findByIdAndUpdate(id, update, {
+  runValidators: true
+});
+
+15. Complete Production Example
+const getItems = async (req, res) => {
+
+  const {
+    page = 1,
+    limit = 10,
+    sort = "-createdAt",
+    status,
+    category,
+    minPrice,
+    maxPrice,
+    search,
+    select
+  } = req.query;
+
+
+  const filter = {};
+
+  if (status)
+    filter.status = status;
+
+  if (category)
+    filter.category = category;
+
+  if (minPrice || maxPrice) {
+    filter.price = {};
+
+    if (minPrice)
+      filter.price.$gte = Number(minPrice);
+
+    if (maxPrice)
+      filter.price.$lte = Number(maxPrice);
+  }
+
+  if (search) {
+    filter.name = {
+      $regex: search,
+      $options: "i"
+    };
+  }
+
+
+  const skip = (page - 1) * limit;
+
+
+  let query = Item.find(filter);
+
+  if (select)
+    query = query.select(select);
+
+  query = query
+    .sort(sort)
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+
+  const data = await query;
+
+  const total = await Item.countDocuments(filter);
+
+
+  res.json({
+    total,
+    page: Number(page),
+    limit: Number(limit),
+    results: data.length,
+    data
+  });
+
+};
+
+16. Example API Calls
+Filter
+GET /api/items?status=active
+
+Range
+GET /api/items?minPrice=100&maxPrice=500
+
+Sort
+GET /api/items?sort=price,-quantity
+
+Pagination
+GET /api/items?page=2&limit=5
+
+Search
+GET /api/items?search=pen
+
+Select Fields
+GET /api/items?select=name,price
+
+17. Combined Example
+GET /api/items?
+status=active&
+category=electronics&
+minPrice=100&
+maxPrice=1000&
+search=phone&
+sort=-price&
+page=1&
+limit=10&
+select=name,price,status
+
+18. Internal MongoDB Query Generated
+Item.find({
+  status: "active",
+  category: "electronics",
+  price: {
+    $gte: 100,
+    $lte: 1000
+  },
+  name: {
+    $regex: "phone",
+    $options: "i"
+  }
+})
+.select("name price status")
+.sort("-price")
+.skip(0)
+.limit(10)
+.lean();
+
+19. Performance Best Practices
+
+Always use:
+
+lean()
+limit()
+select()
+indexes
+
+20. Recommended Index Example
+itemSchema.index({ price: 1 });
+itemSchema.index({ status: 1 });
+itemSchema.index({ name: "text" });
+
+
+If you want, I can also give a ready-to-use reusable utility function for advanced filtering like production apps (used in Amazon, Flipkart, etc.).
